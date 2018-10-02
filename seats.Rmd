@@ -1,0 +1,85 @@
+---
+title: "seats"
+author: "Joyce Robbins"
+date: "10/1/2018"
+output: 
+  word_document:
+    df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+```
+
+```{r functions}
+library(tidyverse)
+
+get_seatinfo <- function(filepath) {
+  read_csv(filepath,
+           col_types = cols(Seat = col_integer(), Version = col_factor(levels = c("A", "B")),
+                            Row = col_integer(), Column = col_integer()))
+}
+
+get_students <- function(filepath) { read_csv(filepath, col_names = TRUE, cols_only(Student = col_character())) %>%
+  filter(Student != "Points Possible") %>%
+  filter(Student != "Student, Test") %>% arrange(Student)
+}
+
+
+roomlayout <- function(df) {
+  ggplot(df, aes(factor(Column),
+                 factor(Row), 
+                 label = Seat, 
+                 fill = Version)) +
+    geom_tile(alpha = .5) + 
+    geom_text() +  
+    theme_classic(14) + 
+    xlab("Front") + ylab("")
+}
+
+assign_seats <- function(sdf, seats) {
+  num_students <- nrow(sdf)
+  num_seats <- nrow(seats)
+  index <- sample(num_seats,
+                  num_students)
+  tibble(Student = sdf$Student,
+         Seat = seats$Seat[index],
+         Version = seats$Version[index])
+  }
+
+```
+
+```{r}
+seats <- get_seatinfo("Math203.csv")
+
+students <- get_students("~/Documents/Students/TuesThursTest1.csv") %>% assign_seats(seats)
+```
+
+### Seating Chart
+```{r}
+students[,c("Student", "Seat")]
+```
+
+
+### Room Layout
+```{r}
+roomlayout(seats)
+```
+
+
+### Version Count
+```{r}
+summary(students$Version)
+```
+
+
+### Sorted by Seat
+```{r}
+students %>% arrange(Seat) %>% select("Seat", "Version", "Student")
+```
+
+
+
+
