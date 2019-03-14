@@ -1,7 +1,5 @@
 ---
-title: "seats"
-author: "Joyce Robbins"
-date: "10/1/2018"
+date: "March 12, 2019"
 output: 
   word_document:
     df_print: kable
@@ -14,11 +12,19 @@ knitr::opts_chunk$set(echo = FALSE,
 ```
 
 ```{r functions}
+# 1. Download grades csv from CourseWorks and put in Documents/Students folder
+# 2. Set class name to csv file
+# 2. Set room name
+
+class <- "Stat5293Test1seating.csv"
+
+room <- "Mudd627.csv"
+
 library(tidyverse)
 
 get_seatinfo <- function(filepath) {
   read_csv(filepath,
-           col_types = cols(Seat = col_integer(), Version = col_factor(levels = c("A", "B")),
+           col_types = cols(Seat = col_character(), Version = col_factor(levels = c("A", "B")),
                             Row = col_integer(), Column = col_integer()))
 }
 
@@ -36,48 +42,76 @@ roomlayout <- function(df) {
     geom_tile(alpha = .5) + 
     geom_text() +  
     theme_classic(14) + 
-    xlab("Front") + ylab("")
+    xlab("Front") + ylab("") +
+    scale_fill_manual(values = c("white", "grey30"))
 }
 
-assign_seats <- function(sdf, seats) {
+assign_seats <- function(sdf, seats, rows) {
   num_students <- nrow(sdf)
   num_seats <- nrow(seats)
-  index <- sample(num_seats,
-                  num_students)
-  tibble(Student = sdf$Student,
+  if (num_students < num_seats) {
+    sdf[(num_students + 1):num_seats, 1] <- "ZZZUnassigned"
+  }
+
+  if (rows) {
+    index <- 1:num_seats
+    index[1:num_students] <- sample(num_students)
+    tibble(Student = sdf$Student,
+         Row = seats$Seat[index],
+         Version = seats$Version[index])
+  } else {
+    index <- sample(num_seats)
+    tibble(Student = sdf$Student,
          Seat = seats$Seat[index],
          Version = seats$Version[index])
+  }
   }
 
 ```
 
 ```{r}
-seats <- get_seatinfo("Math203.csv")
+set.seed(500)
 
-students <- get_students("~/Documents/Students/TuesThursTest1.csv") %>% assign_seats(seats)
+seats <- get_seatinfo(room)
+
+rows <- FALSE
+if (sum(seats$Seat == seats$Row) == nrow(seats)) rows <- TRUE
+
+students <- get_students(paste0("~/Documents/Students/", class)) %>% assign_seats(seats, rows)
 ```
 
 ### Seating Chart
 ```{r}
-students[,c("Student", "Seat")]
+if (rows) {
+  students[,c("Student", "Row")]
+  } else {
+  students[,c("Student", "Seat")]
+    }
 ```
 
 
 ### Room Layout
-```{r}
+```{r, fig.width = 8}
 roomlayout(seats)
 ```
 
 
 ### Version Count
 ```{r}
-summary(students$Version)
+summary(students$Version[students$Student != "ZZZUnassigned"])
 ```
 
 
 ### Sorted by Seat
 ```{r}
-students %>% arrange(Seat) %>% select("Seat", "Version", "Student")
+if (rows) {
+  students %>% arrange(Row, Student) %>% 
+  select("Row", "Student")
+} else {
+    students <- students %>%
+    mutate(Seat = factor(Seat, levels = seats$Seat))
+  students %>% arrange(Seat, Student) %>% select("Seat", "Version", "Student")
+}
 ```
 
 
