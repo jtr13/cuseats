@@ -1,5 +1,5 @@
 ---
-date: "March 12, 2019"
+date: October 21, 2019
 output: 
   word_document:
     df_print: kable
@@ -12,14 +12,6 @@ knitr::opts_chunk$set(echo = FALSE,
 ```
 
 ```{r functions}
-# 1. Download grades csv from CourseWorks and put in Documents/Students folder
-# 2. Set class name to csv file
-# 2. Set room name
-
-class <- "Stat5293Test1seating.csv"
-
-room <- "Mudd627.csv"
-
 library(tidyverse)
 
 get_seatinfo <- function(filepath) {
@@ -50,7 +42,7 @@ assign_seats <- function(sdf, seats, rows) {
   num_students <- nrow(sdf)
   num_seats <- nrow(seats)
   if (num_students < num_seats) {
-    sdf[(num_students + 1):num_seats, 1] <- "ZZZUnassigned"
+    sdf[(num_students + 1):num_seats, 1] <- "Unassigned"
   }
 
   if (rows) {
@@ -69,8 +61,38 @@ assign_seats <- function(sdf, seats, rows) {
 
 ```
 
+```{r, eval=FALSE, echo=FALSE}
+# converting layouts from cs3157/seatingcharts
+roominfo <- read_tsv("sch501.txt", col_names = FALSE) %>% 
+  rownames_to_column("Row") %>% 
+  gather(key = "Column", value = "Seat", -Row) %>% 
+  mutate(Column = parse_number(Column),
+         Row = parse_number(Row)) %>%
+  mutate(Row = max(Row) + 1 - Row) %>% 
+  filter(complete.cases(.)) %>% 
+  mutate(Version = ifelse(Column %% 2 == 0, "A", "B")) %>% 
+  select(Seat, Row, Column, Version)
+  
+write_csv(roominfo, "Scher501.csv")
+
+# creating a temp version with fewer Version As
+roominfo <- roominfo %>% 
+  filter(!(Column == 20 & Row < 10))
+write_csv(roominfo, "Scher501temp.csv")
+```
+
+
 ```{r}
-set.seed(500)
+# Start here
+# 1. Download grades csv from CourseWorks and put in Documents/Students folder
+# 2. Set class name to csv file
+# 2. Set room name
+
+class <- "EDAVFall2019MidtermSeating.csv"
+
+room <- "Scher501temp.csv"
+
+set.seed(501)
 
 seats <- get_seatinfo(room)
 
@@ -85,25 +107,28 @@ students <- get_students(paste0("~/Documents/Students/", class)) %>% assign_seat
 if (rows) {
   students[,c("Student", "Row")]
   } else {
-  students[,c("Student", "Seat")]
+  students %>% 
+      filter(Student != "Unassigned") %>% 
+      select(Student, Seat) %>% 
+      knitr::kable()
     }
 ```
 
 
 ### Room Layout
-```{r, fig.width = 8}
+```{r, fig.width = 10}
 roomlayout(seats)
 ```
 
 
 ### Version Count
 ```{r}
-summary(students$Version[students$Student != "ZZZUnassigned"])
+summary(students$Version[students$Student != "Unassigned"])
 ```
 
 
+```{r, eval=FALSE}
 ### Sorted by Seat
-```{r}
 if (rows) {
   students %>% arrange(Row, Student) %>% 
   select("Row", "Student")
@@ -114,6 +139,21 @@ if (rows) {
 }
 ```
 
+### Sorted by Seat
+```{r}
+# trying a new method that will work with Scher501
+if (rows) {
+  students %>% arrange(Row, Student) %>% 
+  select("Row", "Student")
+} else {
+    students %>% 
+    left_join(seats) %>% 
+    arrange(Row, Column) %>% 
+    mutate(Student = ifelse(Student =="Unassigned", "*Unassigned*", Student)) %>% 
+    select(Seat, Version, Student) %>% 
+    knitr::kable()
+}
+```
 
 
 
