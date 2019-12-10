@@ -1,5 +1,5 @@
 ---
-date: October 21, 2019
+date: December 9, 2019
 output: 
   word_document:
     df_print: kable
@@ -88,9 +88,9 @@ write_csv(roominfo, "Scher501temp.csv")
 # 2. Set class name to csv file
 # 2. Set room name
 
-class <- "EDAVFall2019MidtermSeating.csv"
+class <- "EDAVFall2019FinalSeating.csv"
 
-room <- "Scher501temp.csv"
+room <- "Scher501b.csv"
 
 set.seed(501)
 
