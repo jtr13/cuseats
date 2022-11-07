@@ -1,7 +1,7 @@
 ---
-date: December 9, 2019
+date: `r Sys.Date()`
 output: 
-  word_document:
+  word_document: 
     df_print: kable
 ---
 
@@ -88,18 +88,22 @@ write_csv(roominfo, "Scher501temp.csv")
 # 2. Set class name to csv file
 # 2. Set room name
 
-class <- "EDAVFall2019FinalSeating.csv"
+class <- "stat1201test1.csv"
 
-room <- "Scher501b.csv"
+room <- "HamiltonLarge.csv"
 
-set.seed(501)
+set.seed(1116)
 
 seats <- get_seatinfo(room)
 
-rows <- FALSE
-if (sum(seats$Seat == seats$Row) == nrow(seats)) rows <- TRUE
+rows <- TRUE
+# if (sum(seats$Seat == seats$Row) == nrow(seats)) rows <- TRUE
 
-students <- get_students(paste0("~/Documents/Students/", class)) %>% assign_seats(seats, rows)
+not_here <- c("Maitland, Anna", "Frascati, Grace", "Craigie, Luca", "Yu, Melissa", "Andersson, Sandra", "Rana, Ananya", "Fu, Victoria")
+
+students <- get_students(paste0("~/Documents/Students/", class)) |> 
+  filter(!(Student %in% not_here)) |> 
+  assign_seats(seats, rows)
 ```
 
 ### Seating Chart
@@ -114,17 +118,6 @@ if (rows) {
     }
 ```
 
-
-### Room Layout
-```{r, fig.width = 10}
-roomlayout(seats)
-```
-
-
-### Version Count
-```{r}
-summary(students$Version[students$Student != "Unassigned"])
-```
 
 
 ```{r, eval=FALSE}
@@ -155,5 +148,16 @@ if (rows) {
 }
 ```
 
+
+### Room Layout
+```{r, fig.width = 10}
+roomlayout(seats)
+```
+
+
+### Version Count
+```{r}
+summary(students$Version[students$Student != "Unassigned"])
+```
 
 
