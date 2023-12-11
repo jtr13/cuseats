@@ -4,6 +4,10 @@ output:
   word_document: 
     df_print: kable
 ---
+```{r, eval = FALSE, echo = FALSE}
+# some room layouts from: cs3157 / seatingcharts
+```
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE,
